@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=ROUVY (Wine)
+Comment=ROUVY avec Wine, DXVK et Bluetooth Linux
+Exec=@LAUNCHER@
+Terminal=false
+Categories=Game;Sports;
+StartupNotify=true
+StartupWMClass=rouvy.exe

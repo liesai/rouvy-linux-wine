@@ -1,0 +1,9 @@
+LIBRARY DnsZeroConfLib
+EXPORTS
+    CreateDnsZeroConfAdapter
+    DestroyDnsZeroConfAdapter
+    DnsZeroConfAdapter_IsEnabled
+    DnsZeroConfAdapter_SetDiscoveryCallback
+    DnsZeroConfAdapter_SetEventCallback
+    DnsZeroConfAdapter_StartScan
+    DnsZeroConfAdapter_StopScan

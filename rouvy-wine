@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+readonly WINE_PREFIX="${ROUVY_WINEPREFIX:-$DATA_HOME/wineprefixes/rouvy}"
+readonly ROUVY_DIR="${ROUVY_DIR:-$WINE_PREFIX/drive_c/Program Files/VirtualTraining/Rouvy}"
+readonly ROUVY_EXE="$ROUVY_DIR/Rouvy.exe"
+readonly WINE_BIN="${ROUVY_WINE_BIN:-$(command -v wine || true)}"
+readonly BLE_HELPER="${ROUVY_BLE_HELPER:-$DATA_HOME/rouvy-linux-wine/rouvy-ble-host.py}"
+
+if [[ -z "$WINE_BIN" || ! -x "$WINE_BIN" ]]; then
+  printf 'Wine est introuvable. Définissez ROUVY_WINE_BIN.\n' >&2
+  exit 1
+fi
+if [[ ! -f "$ROUVY_EXE" ]]; then
+  printf 'ROUVY est introuvable dans %s\n' "$ROUVY_EXE" >&2
+  exit 1
+fi
+
+if ! systemctl is-active --quiet bluetooth.service; then
+  if command -v pkexec >/dev/null; then
+    pkexec systemctl unmask --runtime bluetooth.service
+    pkexec systemctl start bluetooth.service
+  fi
+fi
+
+for _attempt in {1..10}; do
+  systemctl is-active --quiet bluetooth.service && break
+  sleep 1
+done
+if ! systemctl is-active --quiet bluetooth.service; then
+  printf 'BlueZ n’est pas actif; le Bluetooth ROUVY sera indisponible.\n' >&2
+fi
+
+export WINEPREFIX="$WINE_PREFIX"
+export WINEDEBUG="${WINEDEBUG:--all}"
+export DXVK_LOG_LEVEL="${DXVK_LOG_LEVEL:-none}"
+
+# Unity falls back to DirectInput under Wine. This makes pointer coordinates
+# usable in ROUVY's native X11 window.
+"$WINE_BIN" reg add 'HKCU\Software\Wine\DirectInput' \
+  /v MouseWarpOverride /t REG_SZ /d force /f >/dev/null 2>&1 || \
+  printf 'Avertissement: correctif souris Wine non appliqué.\n' >&2
+
+ble_pid=""
+cleanup() {
+  if [[ -n "$ble_pid" ]] && kill -0 "$ble_pid" 2>/dev/null; then
+    kill "$ble_pid" 2>/dev/null || true
+    wait "$ble_pid" 2>/dev/null || true
+  fi
+}
+trap cleanup EXIT INT TERM
+
+if [[ -f "$BLE_HELPER" ]]; then
+  mapfile -t stale_ble_pids < <(
+    pgrep -u "$(id -u)" -f "^python3 $BLE_HELPER$" 2>/dev/null || true
+  )
+  if ((${#stale_ble_pids[@]})); then
+    kill "${stale_ble_pids[@]}" 2>/dev/null || true
+    for _attempt in {1..20}; do
+      remaining=0
+      for stale_pid in "${stale_ble_pids[@]}"; do
+        kill -0 "$stale_pid" 2>/dev/null && remaining=1
+      done
+      ((remaining == 0)) && break
+      sleep 0.1
+    done
+  fi
+
+  python3 "$BLE_HELPER" >/tmp/rouvy-ble-host.log 2>&1 &
+  ble_pid=$!
+  for _attempt in {1..30}; do
+    if ! kill -0 "$ble_pid" 2>/dev/null; then
+      printf 'Le pont BLE n’a pas démarré; voir /tmp/rouvy-ble-host.log.\n' >&2
+      break
+    fi
+    ss -lnt 'sport = :28766' 2>/dev/null | grep -q LISTEN && break
+    sleep 0.1
+  done
+fi
+
+cd "$ROUVY_DIR"
+"$WINE_BIN" Rouvy.exe -screen-fullscreen 0 -screen-width 1920 \
+  -screen-height 1080 "$@"

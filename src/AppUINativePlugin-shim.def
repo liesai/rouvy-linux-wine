@@ -1,0 +1,15 @@
+LIBRARY AppUINativePlugin
+EXPORTS
+    NativeAppUI_DarkMode
+    NativeAppUI_EnsureUnityWindowFound
+    NativeAppUI_GetPasteBoardData
+    NativeAppUI_GetPasteBoardDataLength
+    NativeAppUI_GetSystemColor
+    NativeAppUI_HighContrast
+    NativeAppUI_Initialize
+    NativeAppUI_LayoutDirection
+    NativeAppUI_ReduceMotion
+    NativeAppUI_ScaleFactor
+    NativeAppUI_SetPasteBoardData
+    NativeAppUI_TextScaleFactor
+    NativeAppUI_Uninitialize
