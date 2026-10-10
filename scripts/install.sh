@@ -48,4 +48,27 @@ chmod 0644 "$DATA_HOME/applications/rouvy-wine.desktop"
 command -v update-desktop-database >/dev/null && \
   update-desktop-database "$DATA_HOME/applications" || true
 
+# Wine may publish a second menu entry that bypasses this launcher. Hide it so
+# users do not accidentally lose both the DirectInput fix and the BLE helper.
+vendor_desktop="$DATA_HOME/applications/wine/Programs/Rouvy/Rouvy.desktop"
+if [[ -f "$vendor_desktop" ]]; then
+  vendor_backup="$vendor_desktop.rouvy-linux-wine-original"
+  [[ -e "$vendor_backup" ]] || cp -a "$vendor_desktop" "$vendor_backup"
+  if grep -q '^NoDisplay=' "$vendor_desktop"; then
+    sed -i 's/^NoDisplay=.*/NoDisplay=true/' "$vendor_desktop"
+  else
+    printf '\nNoDisplay=true\n' >>"$vendor_desktop"
+  fi
+fi
+
+# Authentication/deep links must also start the helper and the selected Wine.
+protocol_desktop="$DATA_HOME/applications/wine-protocol-com.rouvy.desktop"
+if [[ -f "$protocol_desktop" ]]; then
+  protocol_backup="$protocol_desktop.rouvy-linux-wine-original"
+  [[ -e "$protocol_backup" ]] || cp -a "$protocol_desktop" "$protocol_backup"
+  sed -i "s|^Exec=.*|Exec=$BIN_HOME/rouvy-wine %u|" "$protocol_desktop"
+fi
+command -v update-desktop-database >/dev/null && \
+  update-desktop-database "$DATA_HOME/applications" || true
+
 printf 'Installation terminée. Lancez: %s\n' "$BIN_HOME/rouvy-wine"

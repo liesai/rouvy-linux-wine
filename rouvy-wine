@@ -5,7 +5,13 @@ readonly DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 readonly WINE_PREFIX="${ROUVY_WINEPREFIX:-$DATA_HOME/wineprefixes/rouvy}"
 readonly ROUVY_DIR="${ROUVY_DIR:-$WINE_PREFIX/drive_c/Program Files/VirtualTraining/Rouvy}"
 readonly ROUVY_EXE="$ROUVY_DIR/Rouvy.exe"
-readonly WINE_BIN="${ROUVY_WINE_BIN:-$(command -v wine || true)}"
+if [[ -n "${ROUVY_WINE_BIN:-}" ]]; then
+  readonly WINE_BIN="$ROUVY_WINE_BIN"
+elif [[ -x /opt/wine-devel/bin/wine ]]; then
+  readonly WINE_BIN="/opt/wine-devel/bin/wine"
+else
+  readonly WINE_BIN="$(command -v wine || true)"
+fi
 readonly BLE_HELPER="${ROUVY_BLE_HELPER:-$DATA_HOME/rouvy-linux-wine/rouvy-ble-host.py}"
 
 if [[ -z "$WINE_BIN" || ! -x "$WINE_BIN" ]]; then

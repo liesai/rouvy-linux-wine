@@ -95,6 +95,10 @@ alors `make install`.
 rouvy-wine
 ```
 
+Dans le menu d'applications, utilisez **ROUVY Linux (Wine + Bluetooth)**. Le
+raccourci `Rouvy` éventuellement créé par l'installeur Windows contourne le
+helper BlueZ et ne doit pas être utilisé.
+
 Variables utiles :
 
 ```bash

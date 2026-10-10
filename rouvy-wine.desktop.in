@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=ROUVY (Wine)
-Comment=ROUVY avec Wine, DXVK et Bluetooth Linux
+Name=ROUVY Linux (Wine + Bluetooth)
+Comment=Lance ROUVY avec Wine, DXVK et le pont BlueZ
 Exec=@LAUNCHER@
 Terminal=false
 Categories=Game;Sports;
