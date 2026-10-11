@@ -86,5 +86,28 @@ if [[ -f "$BLE_HELPER" ]]; then
 fi
 
 cd "$ROUVY_DIR"
-"$WINE_BIN" Rouvy.exe -screen-fullscreen 0 -screen-width 1920 \
+launch_command=(
+  "$WINE_BIN" Rouvy.exe -screen-fullscreen 0 -screen-width 1920
   -screen-height 1080 "$@"
+)
+
+# Keep the desktop session active only while ROUVY is running. GNOME's idle
+# inhibitor prevents screen blanking; logind's inhibitor prevents system sleep.
+if [[ "${ROUVY_ALLOW_SLEEP:-0}" != 1 ]]; then
+  if command -v gnome-session-inhibit >/dev/null; then
+    launch_command=(
+      gnome-session-inhibit --app-id=rouvy-linux-wine
+      --reason='ROUVY training session in progress'
+      --inhibit=idle --inhibit=suspend "${launch_command[@]}"
+    )
+  fi
+  if command -v systemd-inhibit >/dev/null; then
+    launch_command=(
+      systemd-inhibit --what=idle:sleep --who=ROUVY
+      --why='ROUVY training session in progress' --mode=block
+      "${launch_command[@]}"
+    )
+  fi
+fi
+
+"${launch_command[@]}"

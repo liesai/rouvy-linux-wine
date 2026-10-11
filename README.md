@@ -42,7 +42,10 @@ ROUVY / Unity
 ```
 
 Le lanceur applique également `MouseWarpOverride=force`, nécessaire au bon
-fonctionnement de la souris dans la fenêtre X11 native de ROUVY.
+fonctionnement de la souris dans la fenêtre X11 native de ROUVY. Pendant une
+séance, il pose aussi des inhibiteurs GNOME et `systemd-logind` temporaires pour
+empêcher l'extinction de l'écran et la mise en veille de la machine. Ces
+inhibiteurs disparaissent automatiquement à la fermeture de ROUVY.
 
 ## Prérequis
 
@@ -105,6 +108,12 @@ Variables utiles :
 export ROUVY_WINEPREFIX=/chemin/vers/le/prefixe
 export ROUVY_WINE_BIN=/chemin/vers/wine
 export ROUVY_BLUEZ_ADAPTER=/org/bluez/hci1
+```
+
+Pour autoriser exceptionnellement la mise en veille pendant ROUVY :
+
+```bash
+ROUVY_ALLOW_SLEEP=1 rouvy-wine
 ```
 
 Le helper et la DLL communiquent uniquement sur `127.0.0.1` : UDP 28765 pour
